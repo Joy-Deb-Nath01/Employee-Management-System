@@ -8,6 +8,7 @@ from pathlib import Path
 import os
 import psycopg2
 from decouple import config, Csv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,6 +19,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-fallback-key-change-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+
+# Render deployment settings: automatically allow Render hostname
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}']
 
 # Application definition
 
@@ -70,44 +77,57 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ems_project.wsgi.application'
 
 # Database
-# Try to connect to PostgreSQL; fallback to SQLite if connection fails.
-try:
-    db_name = config('DB_NAME')
-    db_user = config('DB_USER')
-    db_password = config('DB_PASSWORD')
-    db_host = config('DB_HOST')
-    db_port = config('DB_PORT', cast=int)
-    
-    # Test connection
-    conn = psycopg2.connect(
-        dbname=db_name,
-        user=db_user,
-        password=db_password,
-        host=db_host,
-        port=db_port,
-        connect_timeout=2
-    )
-    conn.close()
-    
+# Check if DATABASE_URL is defined (typical for Render/production)
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': db_name,
-            'USER': db_user,
-            'PASSWORD': db_password,
-            'HOST': db_host,
-            'PORT': str(db_port),
-        }
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-    print("PostgreSQL database successfully connected and configured.")
-except Exception as e:
-    print(f"WARNING: Could not connect to PostgreSQL ({e}). Falling back to SQLite for local development.")
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+    print("PostgreSQL database configured using DATABASE_URL.")
+else:
+    # Try to connect to PostgreSQL; fallback to SQLite if connection fails.
+    try:
+        db_name = config('DB_NAME')
+        db_user = config('DB_USER')
+        db_password = config('DB_PASSWORD')
+        db_host = config('DB_HOST')
+        db_port = config('DB_PORT', cast=int)
+        
+        # Test connection
+        conn = psycopg2.connect(
+            dbname=db_name,
+            user=db_user,
+            password=db_password,
+            host=db_host,
+            port=db_port,
+            connect_timeout=2
+        )
+        conn.close()
+        
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': db_name,
+                'USER': db_user,
+                'PASSWORD': db_password,
+                'HOST': db_host,
+                'PORT': str(db_port),
+            }
         }
-    }
+        print("PostgreSQL database successfully connected and configured.")
+    except Exception as e:
+        print(f"WARNING: Could not connect to PostgreSQL ({e}). Falling back to SQLite for local development.")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

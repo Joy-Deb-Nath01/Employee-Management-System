@@ -108,3 +108,45 @@ Start the Django development server:
 python manage.py runserver
 ```
 Navigate to [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser.
+
+---
+
+## Deploying to Render
+
+This project is pre-configured for direct deployment to Render as a **Web Service** using a **PostgreSQL** database.
+
+### 1. Create a Render PostgreSQL Database
+1. Go to your Render Dashboard and create a new **PostgreSQL** database.
+2. Give it a name (e.g., `ems-db`) and choose your region.
+3. Once created, copy the **Internal Database URL** (if deploying the web service in the same region/account) or **External Database URL**.
+
+### 2. Create a Render Web Service
+1. In your Render Dashboard, click **New +** and select **Web Service**.
+2. Connect your GitHub repository.
+3. Configure the following service settings:
+   - **Name**: `employee-management-system` (or your preferred name)
+   - **Language**: `Python 3`
+   - **Branch**: `main`
+   - **Region**: Same region as your database
+   - **Build Command**: `./build.sh`
+   - **Start Command**: `gunicorn ems_project.wsgi --bind 0.0.0.0:$PORT`
+   - **Instance Type**: Select **Free** (or any other tier)
+
+### 3. Configure Environment Variables
+In your Web Service configuration, navigate to the **Environment** tab and add the following:
+- `SECRET_KEY`: A secure, random secret key (e.g. generated via `django.core.management.utils.get_random_secret_key()`).
+- `DEBUG`: `False`
+- `DATABASE_URL`: Paste the database URL from step 1.
+- `ALLOWED_HOSTS`: Set to your web service URL (e.g., `your-app-name.onrender.com`). *Note: The app automatically detects `RENDER_EXTERNAL_HOSTNAME` and appends it to `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`, so setting this is optional but recommended.*
+
+### 4. Create an Admin User or Seed Mock Data
+Once the deployment finishes successfully:
+1. Go to the **Shell** tab of your Render Web Service.
+2. Run the following command to seed testing accounts:
+   ```bash
+   python manage.py seed_ems
+   ```
+3. (Optional) Run the following command to create a custom superuser:
+   ```bash
+   python manage.py createsuperuser
+   ```
