@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Employees{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="brand-text m-0">Employees</h2>
+            <p class="text-muted mb-0">Browse and manage employee profiles and credentials</p>
+        </div>
+        <a href="{% url 'employee_add' %}" class="btn btn-gradient-primary">
+            <i class="bi bi-person-plus-fill me-2"></i>Register Employee
+        </a>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="card card-custom border-0 p-4 mb-4 shadow-sm">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small text-muted uppercase font-semibold">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control form-control-custom border-start-0 ps-0" placeholder="ID, Name, Email, Title..." value="{{ request.GET.search }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted uppercase font-semibold">Department</label>
+                <select name="department" class="form-select form-control-custom">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted uppercase font-semibold">Designation</label>
+                <select name="designation" class="form-select form-control-custom">
+                    <option value="">All Designations</option>
+                    {% for des in designations %}
+                        <option value="{{ des }}" {% if request.GET.designation == des %}selected{% endif %}>{{ des }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted uppercase font-semibold">Status</label>
+                <select name="status" class="form-select form-control-custom">
+                    <option value="">All statuses</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active Only</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary w-100 py-2"><i class="bi bi-funnel me-1"></i>Filter</button>
+                <a href="{% url 'employee_list' %}" class="btn btn-light w-100 py-2 border"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card card-custom border-0 p-4 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-custom align-middle">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr class="{% if not emp.is_active %}opacity-75 bg-light-subtle{% endif %}">
+                        <td><span class="badge bg-secondary badge-custom">{{ emp.employee_id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if emp.profile_photo %}
+                                    <img src="{{ emp.profile_photo.url }}" class="rounded-circle border" width="36" height="36" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center border" style="width: 36px; height: 36px; font-weight: bold;">
+                                        {{ emp.user.username|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <a href="{% url 'employee_detail' emp.id %}" class="text-decoration-none text-dark fw-bold d-block">{{ emp.full_name }}</a>
+                                    <span class="text-muted small">@{{ emp.user.username }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ emp.department.name|default:"Unassigned" }}</td>
+                        <td>{{ emp.designation|default:"-" }}</td>
+                        <td>
+                            <div class="small"><i class="bi bi-envelope me-1 text-muted"></i>{{ emp.user.email }}</div>
+                            {% if emp.phone %}
+                                <div class="small"><i class="bi bi-phone me-1 text-muted"></i>{{ emp.phone }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if emp.is_active %}
+                                <span class="badge bg-success badge-custom"><i class="bi bi-check2-circle me-1"></i>Active</span>
+                            {% else %}
+                                <span class="badge bg-danger badge-custom"><i class="bi bi-dash-circle me-1"></i>Suspended</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Manage
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                    <li><a class="dropdown-content dropdown-item" href="{% url 'employee_detail' emp.id %}"><i class="bi bi-eye text-info me-2"></i>View Profile</a></li>
+                                    <li><a class="dropdown-content dropdown-item" href="{% url 'employee_edit' emp.id %}"><i class="bi bi-pencil text-primary me-2"></i>Edit Details</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-content dropdown-item {% if emp.is_active %}text-danger{% else %}text-success{% endif %}" href="{% url 'employee_toggle_active' emp.id %}">
+                                            {% if emp.is_active %}
+                                                <i class="bi bi-person-x me-2"></i>Deactivate / Soft-Delete
+                                            {% else %}
+                                                <i class="bi bi-person-check me-2"></i>Reactivate
+                                            {% endif %}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-people text-muted fs-1 mb-2 d-block"></i>
+                            No employees found matching the search criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Links -->
+        {% if is_paginated %}
+        <nav class="d-flex justify-content-between align-items-center mt-4">
+            <span class="text-muted small">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} employees</span>
+            <ul class="pagination pagination-sm m-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1&{{ queries }}"><i class="bi bi-chevron-double-left"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ queries }}"><i class="bi bi-chevron-left"></i></a></li>
+                {% endif %}
+                
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ queries }}"><i class="bi bi-chevron-right"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ paginator.num_pages }}&{{ queries }}"><i class="bi bi-chevron-double-right"></i></a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Leaves Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="brand-text m-0">Leave Requests Admin</h2>
+            <p class="text-muted mb-0">Review, approve, or reject employee leave requests</p>
+        </div>
+    </div>
+
+    <!-- Filtering Bar -->
+    <div class="card card-custom border-0 p-4 mb-4 shadow-sm">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label small text-muted uppercase font-semibold">Status</label>
+                <select name="status" class="form-select form-control-custom">
+                    <option value="">All statuses</option>
+                    <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending Requests Only</option>
+                    <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved Requests Only</option>
+                    <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected Requests Only</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted uppercase font-semibold">Department</label>
+                <select name="department" class="form-select form-control-custom">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if department_id == dept.id|stringformat:"i" %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary w-100 py-2"><i class="bi bi-funnel me-1"></i>Filter</button>
+                <a href="{% url 'leave_list' %}" class="btn btn-light w-100 py-2 border"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Leaves Requests Table -->
+    <div class="card card-custom border-0 p-4 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-custom align-middle">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Type</th>
+                        <th>Duration</th>
+                        <th>Applied On</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in leaves %}
+                    <tr>
+                        <td><span class="badge bg-secondary badge-custom">{{ req.employee.employee_id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if req.employee.profile_photo %}
+                                    <img src="{{ req.employee.profile_photo.url }}" class="rounded-circle border" width="28" height="28" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center border" style="width: 28px; height: 28px; font-weight: bold; font-size: 0.75rem;">
+                                        {{ req.employee.user.username|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                                <a href="{% url 'employee_detail' req.employee.id %}" class="text-decoration-none text-dark fw-semibold">{{ req.employee.full_name }}</a>
+                            </div>
+                        </td>
+                        <td>{{ req.employee.department.name|default:"Unassigned" }}</td>
+                        <td><strong>{{ req.leave_type }}</strong></td>
+                        <td>
+                            <div class="small fw-semibold text-secondary">{{ req.duration }} day(s)</div>
+                            <div class="small text-muted" style="font-size: 0.75rem;">{{ req.start_date|date:"Y-m-d" }} to {{ req.end_date|date:"Y-m-d" }}</div>
+                        </td>
+                        <td>{{ req.applied_on|date:"Y-m-d h:i A" }}</td>
+                        <td>
+                            <span class="badge badge-custom 
+                                {% if req.status == 'Approved' %}bg-success
+                                {% elif req.status == 'Pending' %}bg-warning text-dark
+                                {% else %}bg-danger{% endif %}">
+                                {{ req.status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if req.status == 'Pending' %}
+                                <a href="{% url 'leave_review' req.id %}" class="btn btn-sm btn-gradient-primary rounded-pill px-3">Review</a>
+                            {% else %}
+                                <span class="text-muted small" title="Remarks: {{ req.remarks|default:'None' }}">Reviewed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No leave requests found matching filters.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

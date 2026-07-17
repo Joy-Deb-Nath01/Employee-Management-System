@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Edit Employee - {{ object.full_name }}{% else %}Register Employee{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="mb-4">
+        <a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i>Back to Employees
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card card-custom border-0 p-5 shadow-sm">
+                <h3 class="brand-text text-dark mb-4">
+                    {% if object %}
+                        <i class="bi bi-pencil-square text-primary me-2"></i>Edit Employee Record
+                    {% else %}
+                        <i class="bi bi-person-plus-fill text-success me-2"></i>Register New Employee
+                    {% endif %}
+                </h3>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- User Account Settings (Visible only during Registration, or custom styled) -->
+                        <h5 class="brand-text text-secondary mb-3 border-bottom pb-2">System Credentials</h5>
+                        
+                        {% if not object %}
+                        <div class="col-md-6 mb-3">
+                            <label for="id_username" class="form-label font-semibold">Username *</label>
+                            {{ form.username }}
+                            {% for error in form.username.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_role" class="form-label font-semibold">User Role *</label>
+                            {{ form.role }}
+                            {% for error in form.role.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_first_name" class="form-label font-semibold">First Name *</label>
+                            {{ form.first_name }}
+                            {% for error in form.first_name.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_last_name" class="form-label font-semibold">Last Name *</label>
+                            {{ form.last_name }}
+                            {% for error in form.last_name.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <label for="id_email" class="form-label font-semibold">Email Address *</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Professional Details -->
+                        <h5 class="brand-text text-secondary mb-3 border-bottom pb-2 mt-2">Professional details</h5>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_department" class="form-label font-semibold">Department</label>
+                            {{ form.department }}
+                            {% for error in form.department.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_designation" class="form-label font-semibold">Designation</label>
+                            {{ form.designation }}
+                            {% for error in form.designation.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if not object %}
+                        <div class="col-md-6 mb-4">
+                            <label for="id_date_of_joining" class="form-label font-semibold">Date of Joining</label>
+                            {{ form.date_of_joining }}
+                            {% for error in form.date_of_joining.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Personal Details -->
+                        <h5 class="brand-text text-secondary mb-3 border-bottom pb-2 mt-2">Personal Information</h5>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_phone" class="form-label font-semibold">Phone Number</label>
+                            {{ form.phone }}
+                            {% for error in form.phone.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_gender" class="form-label font-semibold">Gender</label>
+                            {{ form.gender }}
+                            {% for error in form.gender.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_date_of_birth" class="form-label font-semibold">Date of Birth</label>
+                            {{ form.date_of_birth }}
+                            {% for error in form.date_of_birth.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_profile_photo" class="form-label font-semibold">Profile Photo</label>
+                            {{ form.profile_photo }}
+                            {% for error in form.profile_photo.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-12 mb-4">
+                            <label for="id_address" class="form-label font-semibold">Residential Address</label>
+                            {{ form.address }}
+                            {% for error in form.address.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
+                        <a href="{% url 'employee_list' %}" class="btn btn-light px-4 py-2 border">Cancel</a>
+                        <button type="submit" class="btn btn-gradient-primary px-5 py-2">
+                            {% if object %}Save Employee{% else %}Register Employee{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

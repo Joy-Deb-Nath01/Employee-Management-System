@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}{{ department.name }} Department{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="mb-4">
+        <a href="{% url 'department_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i>Back to Departments
+        </a>
+    </div>
+
+    <!-- Header Card -->
+    <div class="card card-custom border-0 p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h2 class="brand-text m-0">{{ department.name }} Department</h2>
+                <p class="text-muted mt-2 mb-0">{{ department.description|default:"No description provided." }}</p>
+            </div>
+            <a href="{% url 'department_edit' department.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                <i class="bi bi-pencil me-1"></i>Edit Details
+            </a>
+        </div>
+
+        <div class="row g-3 border-top pt-3 mt-2">
+            <div class="col-sm-6 col-md-4">
+                <div class="p-3 bg-light rounded-3 d-flex align-items-center gap-3">
+                    <i class="bi bi-person-badge text-teal fs-3"></i>
+                    <div>
+                        <span class="d-block small text-muted">Department Head</span>
+                        <strong>{{ department.head.full_name|default:"Not Assigned" }}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="p-3 bg-light rounded-3 d-flex align-items-center gap-3">
+                    <i class="bi bi-people-fill text-indigo fs-3"></i>
+                    <div>
+                        <span class="d-block small text-muted">Total Active Members</span>
+                        <strong>{{ assigned_employees.count }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Table -->
+    <div class="card card-custom border-0 p-4">
+        <h4 class="brand-text text-dark mb-3"><i class="bi bi-person-check-fill me-2 text-success"></i>Assigned Employees</h4>
+        <div class="table-responsive">
+            <table class="table table-custom align-middle">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Designation</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in assigned_employees %}
+                    <tr>
+                        <td><span class="badge bg-secondary badge-custom">{{ emp.employee_id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if emp.profile_photo %}
+                                    <img src="{{ emp.profile_photo.url }}" class="rounded-circle border" width="32" height="32">
+                                {% else %}
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center border" style="width: 32px; height: 32px; font-weight: bold; font-size: 0.8rem;">
+                                        {{ emp.user.username|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                                <a href="{% url 'employee_detail' emp.id %}" class="text-decoration-none text-dark fw-semibold">{{ emp.full_name }}</a>
+                            </div>
+                        </td>
+                        <td>{{ emp.designation|default:"-" }}</td>
+                        <td>{{ emp.user.email }}</td>
+                        <td>{{ emp.phone|default:"-" }}</td>
+                        <td><span class="badge bg-success badge-custom">Active</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No active employees assigned to this department.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

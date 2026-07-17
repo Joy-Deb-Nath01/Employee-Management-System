@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}My Attendance History{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="brand-text m-0">My Attendance History</h2>
+            <p class="text-muted mb-0">Track and monitor your daily clocking records</p>
+        </div>
+    </div>
+
+    <!-- Monthly Summary Panel -->
+    <div class="card card-custom border-0 p-4 mb-4 shadow-sm">
+        <h5 class="card-title mb-3"><i class="bi bi-pie-chart-fill me-2 text-indigo"></i>Monthly Summary ({{ current_month }})</h5>
+        <div class="row text-center g-3">
+            <div class="col-6 col-md-3">
+                <div class="p-3 bg-success-subtle border border-success-subtle rounded-3">
+                    <h3 class="fw-bold text-success mb-0">{{ present_count }}</h3>
+                    <span class="text-success-emphasis small">Present Days</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 bg-warning-subtle border border-warning-subtle rounded-3">
+                    <h3 class="fw-bold text-warning-emphasis mb-0">{{ late_count }}</h3>
+                    <span class="text-warning-emphasis small">Late Days</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 bg-info-subtle border border-info-subtle rounded-3">
+                    <h3 class="fw-bold text-info-emphasis mb-0">{{ half_day_count }}</h3>
+                    <span class="text-info-emphasis small">Half Days</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 bg-danger-subtle border border-danger-subtle rounded-3">
+                    <h3 class="fw-bold text-danger mb-0">{{ absent_count }}</h3>
+                    <span class="text-danger-emphasis small">Absent Days</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Logs Table -->
+    <div class="card card-custom border-0 p-4 shadow-sm">
+        <h5 class="card-title mb-3"><i class="bi bi-clock-history me-2 text-primary"></i>Detailed Clocking Logs</h5>
+        <div class="table-responsive">
+            <table class="table table-custom align-middle">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Day</th>
+                        <th>Clock In</th>
+                        <th>Clock Out</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td><strong>{{ log.date|date:"Y-m-d" }}</strong></td>
+                        <td class="text-muted">{{ log.date|date:"l" }}</td>
+                        <td>{{ log.check_in|time:"h:i A"|default:"-" }}</td>
+                        <td>{{ log.check_out|time:"h:i A"|default:"-" }}</td>
+                        <td>
+                            <span class="badge badge-custom 
+                                {% if log.status == 'Present' %}bg-success
+                                {% elif log.status == 'Late' %}bg-warning text-dark
+                                {% elif log.status == 'Half-day' %}bg-info
+                                {% else %}bg-danger{% endif %}">
+                                {{ log.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No clocking records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

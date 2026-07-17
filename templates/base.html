@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A premium Enterprise Employee Management System designed for modern workforce scheduling, attendance, leaves, and department directory.">
+    <title>{% block title %}EMS{% endblock %} | Employee Management System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            {% if user.is_authenticated %}
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="brand d-flex align-items-center justify-content-center gap-2 mb-4">
+                        <i class="bi bi-grid-1x2-fill fs-3 text-info"></i>
+                        <span class="brand-text fs-4 text-white">EMS Pro</span>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        
+                        {% if user.role == 'ADMIN' or user.role == 'HR' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'employees' in request.path %}active{% endif %}" href="{% url 'employee_list' %}">
+                                <i class="bi bi-people"></i> Employees
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'departments' in request.path %}active{% endif %}" href="{% url 'department_list' %}">
+                                <i class="bi bi-building"></i> Departments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'attendance' in request.path and 'history' not in request.path %}active{% endif %}" href="{% url 'attendance_list' %}">
+                                <i class="bi bi-calendar-check"></i> Attendance Admin
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'leave' in request.path and 'history' not in request.path and 'apply' not in request.path %}active{% endif %}" href="{% url 'leave_list' %}">
+                                <i class="bi bi-envelope-paper"></i> Leaves Admin
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Employee views -->
+                        {% if user.role == 'EMPLOYEE' or user.role == 'HR' or user.role == 'ADMIN' %}
+                        <li class="nav-item-divider my-2 border-top border-secondary mx-3"></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'attendance/history' in request.path %}active{% endif %}" href="{% url 'attendance_history' %}">
+                                <i class="bi bi-clock-history"></i> My Attendance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'leave/history' in request.path or 'leave/apply' in request.path %}active{% endif %}" href="{% url 'leave_history' %}">
+                                <i class="bi bi-calendar-range"></i> My Leaves
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+            {% endif %}
+
+            <!-- Main Content Area -->
+            <main class="{% if user.is_authenticated %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4 py-4 min-vh-100 d-flex flex-column justify-content-between">
+                
+                <!-- Topbar -->
+                {% if user.is_authenticated %}
+                <header class="topbar d-flex justify-content-between align-items-center p-3 mb-4 rounded-3">
+                    <button class="btn btn-outline-secondary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <h4 class="mb-0 text-secondary d-none d-sm-block">Welcome back, <span class="text-dark">{{ user.first_name|default:user.username }}</span></h4>
+                        <span class="badge bg-secondary badge-custom">{{ user.get_role_display }}</span>
+                    </div>
+
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if user.employee_profile.profile_photo %}
+                                <img src="{{ user.employee_profile.profile_photo.url }}" alt="Profile" width="36" height="36" class="rounded-circle me-2 border border-2 border-primary">
+                            {% else %}
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 border border-2 border-primary" style="width: 36px; height: 36px; font-weight: bold;">
+                                    {{ user.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                            <span class="d-none d-md-inline">{{ user.get_full_name|default:user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="dropdownUser">
+                            {% if user.employee_profile %}
+                            <li><a class="dropdown-item" href="{% url 'employee_detail' user.employee_profile.id %}"><i class="bi bi-person me-2"></i> My Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            <li>
+                                <form action="{% url 'logout' %}" method="post" class="d-inline w-100">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </header>
+                {% endif %}
+
+                <!-- Content Block -->
+                <div class="flex-grow-1 animate-fade-in">
+                    <!-- Notifications -->
+                    {% if messages %}
+                        <div class="row">
+                            <div class="col-12">
+                                {% for message in messages %}
+                                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert" id="msg-{{ forloop.counter }}">
+                                        <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' or message.tags == 'danger' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% block content %}{% endblock %}
+                </div>
+
+                <!-- Footer -->
+                <footer class="text-center text-muted mt-5 pt-3 border-top" style="font-size: 0.85rem;">
+                    <p class="mb-0">&copy; 2026 EMS Pro. Created with Django & Bootstrap 5. All rights reserved.</p>
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

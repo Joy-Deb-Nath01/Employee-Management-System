@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Review Leave Request{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="mb-4">
+        <a href="{% url 'leave_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i>Back to Requests
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Request Details -->
+        <div class="col-lg-7">
+            <div class="card card-custom border-0 p-5 shadow-sm h-100">
+                <h3 class="brand-text text-dark mb-4"><i class="bi bi-file-earmark-check-fill text-indigo me-2"></i>Review Leave details</h3>
+                
+                <div class="mb-4">
+                    <span class="d-block small text-muted font-semibold uppercase">Employee</span>
+                    <h5 class="text-dark fw-bold m-0">{{ leave.employee.full_name }} ({{ leave.employee.employee_id }})</h5>
+                    <p class="text-muted small mb-0">{{ leave.employee.designation }} | {{ leave.employee.department.name|default:"Unassigned" }}</p>
+                </div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <span class="d-block small text-muted font-semibold uppercase">Leave Type</span>
+                        <strong class="text-primary">{{ leave.leave_type }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <span class="d-block small text-muted font-semibold uppercase">Duration</span>
+                        <strong>{{ leave.duration }} day(s)</strong>
+                    </div>
+                    <div class="col-6">
+                        <span class="d-block small text-muted font-semibold uppercase">Start Date</span>
+                        <span>{{ leave.start_date|date:"Y-m-d" }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="d-block small text-muted font-semibold uppercase">End Date</span>
+                        <span>{{ leave.end_date|date:"Y-m-d" }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <span class="d-block small text-muted font-semibold uppercase">Reason for Leave</span>
+                    <div class="p-3 bg-light rounded-3 text-dark small">{{ leave.reason }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Panel & Balance Check -->
+        <div class="col-lg-5">
+            <div class="card card-custom border-0 p-5 shadow-sm h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <h4 class="brand-text text-dark mb-4"><i class="bi bi-wallet2 text-teal me-2"></i>Employee Leave Balances</h4>
+                    
+                    <div class="list-group mb-4 shadow-sm">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Sick Leave Remaining</span>
+                            <span class="badge bg-primary rounded-pill">{{ leave.employee.leave_balance.sick_balance }} days</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Casual Leave Remaining</span>
+                            <span class="badge bg-warning text-dark rounded-pill">{{ leave.employee.leave_balance.casual_balance }} days</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Earned Leave Remaining</span>
+                            <span class="badge bg-success rounded-pill">{{ leave.employee.leave_balance.earned_balance }} days</span>
+                        </div>
+                    </div>
+
+                    {% if leave.leave_type != 'Unpaid' %}
+                        <!-- Visual verification helper -->
+                        {% if leave.employee.leave_balance.sick_balance < leave.duration and leave.leave_type == 'Sick' or leave.employee.leave_balance.casual_balance < leave.duration and leave.leave_type == 'Casual' or leave.employee.leave_balance.earned_balance < leave.duration and leave.leave_type == 'Earned' %}
+                            <div class="alert alert-danger py-2 small shadow-sm mb-4">
+                                <i class="bi bi-exclamation-octagon-fill me-2"></i><strong>Warning:</strong> Employee does not have enough remaining balance to cover this request.
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success py-2 small shadow-sm mb-4">
+                                <i class="bi bi-check-circle-fill me-2"></i>Employee has sufficient balance to cover this request.
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="remarks" class="form-label font-semibold text-dark small">ADMIN/HR REMARKS</label>
+                        <textarea name="remarks" id="remarks" class="form-control form-control-custom" rows="3" placeholder="Enter review notes or rejection reasons..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="reject" class="btn btn-danger w-100 py-3">
+                            <i class="bi bi-x-circle me-1"></i>Reject Request
+                        </button>
+                        
+                        {% if leave.leave_type == 'Unpaid' or leave.employee.leave_balance.sick_balance >= leave.duration and leave.leave_type == 'Sick' or leave.employee.leave_balance.casual_balance >= leave.duration and leave.leave_type == 'Casual' or leave.employee.leave_balance.earned_balance >= leave.duration and leave.leave_type == 'Earned' %}
+                            <button type="submit" name="action" value="approve" class="btn btn-gradient-success w-100 py-3">
+                                <i class="bi bi-check-circle me-1"></i>Approve Request
+                            </button>
+                        {% else %}
+                            <button class="btn btn-secondary w-100 py-3" disabled title="Insufficient leave balance">
+                                <i class="bi bi-slash-circle me-1"></i>Approve Blocked
+                            </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
